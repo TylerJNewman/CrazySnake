@@ -1,57 +1,261 @@
-html, body, figure, figcaption, ul, li, h1 {
-  margin: 0;
-  padding: 0;
-  border: 0;
+html * {
+  font-family: 'Lato', sans-serif !important;
+/*  font-family: 'Roboto', sans-serif !important;*/
   font: inherit;
-  text-align: inherit;
-}
-
-ul {
-  list-style: none;
-}
-
-li {
-  border-radius: 10px;
 }
 
 body {
-  font-family: sans-serif;
-  text-align: center;
-  font-weight: bold;
+  overflow: hidden;
 }
 
-h1 {
-  font-size: 60px;
-  margin: 30px;
-}
 
-figure {
-  display: inline-block;
-  border: 10px solid black;
-}
 
-ul {
-}
+button#start-button {
+  letter-spacing: 15px;
+  font-size: 69px !important;
 
-ul:after {
-  content: "";
-  clear: both;
+  margin: 0 auto;
+  border: transparent;
+  color: #666684;
+  position: relative;
+  top: -350px;
+  background-color: transparent;
   display: block;
+  cursor: pointer;
+  font-size: 20px;
+  z-index: 1;
+  -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    /* ...and now for the proper property */
+    transition:.5s;
 }
 
-li {
+#config {
+  letter-spacing: 8px;
+  font-size: small !important;
+  text-align: center;
+  margin: 5px auto;
+  border: transparent;
+  color: rgba(43, 43, 43, 0.44);
+/*  position: relative;*/
+  top: -350px;
+  background-color: transparent;
+  display: block;
+  cursor: pointer;
+  font-size: 20px;
+  z-index: 1;
+  -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    /* ...and now for the proper property */
+    transition:.5s;
+}
+
+
+#start-button:focus {
+  outline: 0;
+}
+
+#start-button:hover {
+  /*border: 3px solid #47ff7e;*/
+  /*color: #47ff7e;*/
+  opacity: .5;
+}
+
+.me-info {
+  opacity: 0;
+  position: relative;
+  width: 400px;
+  margin: 0 auto;
+  top: -520px;
+  border-radius: 11px;
+  transition: 1.5s;
+  transition-timing-function: ease;
+}
+
+.me-info img {
   float: left;
-  width: 20px;
-  height: 20px;
+  margin-right: 16px;
+  height: 150px;
 }
 
-.apple {
-  background: red;
+.me-info ul {
+  list-style: none;
+}
+
+.me-info h2 {
+  font-size: 24px;
+  margin-bottom: 0;
+}
+
+.me-info p {
+  margin-top: 0;
+}
+
+.me-info .bullet-block {
+  display: inline-block;
+  background-color: #ff47b8;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  margin-top: 8px;
+  margin-right: 4px;
+}
+
+.game-over {
+  /*display: none;*/
+  color: #ff47b8;
+  position: relative;
+  margin-top: 160px;
+  text-align: center;
+  font-size: 42px;
+  top: -400px;
+  opacity: 0;
+  transition: 1.5s;
+  transition-timing-function: ease;
+}
+
+.countdown-blocks {
+  position: relative;
+  width: 72px;
+  margin: 0 auto;
+  bottom: 292px;
+}
+
+.countdown-blocks:after {
+  display:block;
+  clear: both;
+  content: "";
+}
+
+.countdown-block {
+  opacity: 0;
+  float: left;
+  background-color: #47ff7e;
+  width: 14px;
+  height: 14px;
+  margin: 5px;
+  border-radius: 2px;
+  transition: opacity 1.5s;
 }
 
 .snake {
-  background: green;
+  margin: 0;
+  position: relative;
+  top: 48px;
+  margin: 0 auto;
+  width: 832px;
+  opacity: 1;
+  transition: opacity 500ms;
+}
+
+.snake.paused {
+  opacity: 0.15;
+}
+
+.snake:after {
+  content: " ";
+  display: block;
+  clear: both;
+}
+
+.square {
+  float: left;
+  background-color: transparent;
+  width: 14px;
+  height: 14px;
+  margin: 1px;
+  border-radius: 2px;
+}
+
+.square.apple {
+  background-color: #47ff7e;
+}
+
+.square.on {
+  background-color: #ff47b8;
+}
+
+.stopper {
+  float: left;
+  width: 16px;
+  height: 16px;
+  transition: border 300ms;
+  background-color: transparent;
+}
+
+.stopper.left {
+  width: 15px;
+  height: 16px;
+  border-right: 1px solid white;
+}
+
+.stopper.active.left {
+  border-right: 1px solid black;
+}
+
+.stopper.intro-active.left {
+  border-right: 1px solid black;
 }
 
 
+.stopper.right {
+  width: 15px;
+  height: 16px;
+  border-left: 1px solid white;
+}
 
+.stopper.active.right {
+  border-left: 1px solid black;
+}
+
+.stopper.intro-active.right {
+  border-left: 1px solid black;
+}
+
+.stopper.top {
+  width: 16px;
+  height: 15px;
+  border-bottom: 1px solid white;
+}
+
+.stopper.active.top {
+  border-bottom: 1px solid black;
+}
+
+.stopper.intro-active.top {
+  border-bottom: 1px solid black;
+}
+
+.stopper.bottom {
+  width: 16px;
+  height: 15px;
+  border-top: 1px solid white;
+}
+
+.stopper.active.bottom {
+  border-top: 1px solid black;
+}
+
+.stopper.intro-active.bottom {
+  border-top: 1px solid black;
+}
+
+.stopper.subactive.left {
+  border-right: 1px solid #ccc;
+}
+
+.stopper.subactive.right {
+  border-left: 1px solid #ccc;
+}
+
+.stopper.subactive.top {
+  border-bottom: 1px solid #ccc;
+}
+
+.stopper.subactive.bottom {
+  border-top: 1px solid #ccc;
+}

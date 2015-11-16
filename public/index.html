@@ -1,22 +1,77 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" type="text/css" href="../css/snake.css">
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <script src="./js/jquery-2.1.1.js"></script>
+  <script src="./js/wall.js"></script>
+  <script src="./js/game.js"></script>
+  <script src="./js/canvas.js"></script>
+  <script src="./js/snake.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/keymaster.js"></script>
+  <script src="./js/highScore.js"></script>
 
-    <script type="text/javascript" src="./js/jquery-2.1.1.js"></script>
-    <script type="text/javascript" src="./js/snake.js"></script>
-    <script type="text/javascript" src="./js/snake-view.js"></script>
+
+  <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="./css/snake.css">
+  <link rel="stylesheet" href="./css/animate.css">
+</head>
+<body>
+
+<title>Crazy Snake</title>
+
+<div class="snake">
+
+</div>
+
+<button id="start-button" class="config" style="display: none;">
+  <text id="press-play">PLAY SNAKE</text>
+  <br>
+  <span id="config">
+    <br>←↑→  move</br>
+    <br>SPACEBAR toggle start </br>
+    <br>(Q) quit </br>
+    <br>
+      <span class="high-score"></span>
+    <br>
+  <span>
+</button>
 
 
-  </head>
+<div class="game-over">
+  GAME OVER
+</div>
 
-  <body>
-    <h1>Snake</h1>
-    <figure class="snake-view"></figure>
+<div class="countdown-blocks">
+  <div class="countdown-block block-1"></div>
+  <div class="countdown-block block-2"></div>
+  <div class="countdown-block block-3"></div>
+</div>
 
-    <script>
-      $(function () {
-        test = new snakeGame.View($('.snake-view'));
-      });
-    </script>
- </body>
+<div class="me-info">
+  <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAWvAAAAJGY3MmQxZjY4LTU1ZjAtNGI0Yi05NDA3LWEzZTA3NzQzNDI2Ng.jpg"/>
+
+  <h2>SNAKE</h2>
+  <p>
+    Tyler Newman
+  </p>
+
+  <ul>
+    <li><span class="bullet-block"></span><a href="https://github.com/tylerjnewman">GitHub</a></li>
+    <li><span class="bullet-block"></span><a href="https://www.linkedin.com/in/tyler-newman-22252a8">LinkedIn</a></li>
+    <li><span class="bullet-block"></span><a href="mailto:tylerjnewman18@gmail.com?Subject=Hi%20there" target="_top">tylerjnewman18@gmail.com</a></li>
+  </ul>
+</div>
+
+<script>
+$( document ).ready(function() {
+    $el = $(".snake");
+
+    new window.Game.Play($el, true);
+  });
+</script>
+
+</body>
 </html>
