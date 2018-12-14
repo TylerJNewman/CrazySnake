@@ -1,335 +1,310 @@
-(function () {
+(function() {
+  var Game = (window.Game = window.Game || {});
 
-var Game = window.Game = window.Game || {};
+  var Play = (Game.Play = function($el, firstGame) {
+    console.log("Game.Play");
 
-var Play = Game.Play = function($el, firstGame) {
-  console.log("Game.Play");
+    // instantiate canvas and queue of directions
+    this.$el = $el;
+    this.board = new Game.Board(this.$el);
+    this.dirQueue = [];
 
-  // instantiate canvas and queue of directions
-  this.$el = $el;
-  this.board = new Game.Board(this.$el);
-  this.dirQueue = [];
+    this.firstGame = firstGame;
 
-  this.firstGame = firstGame;
+    this.gameOver = false;
 
-  this.gameOver = false;
+    // set boolean flag for togglePlay()
+    this.newGame = true;
 
-  // set boolean flag for togglePlay()
-  this.newGame = true;
+    // setup keypress shortcuts
+    this.configureKeys();
+    Game.Config.fps = 10;
 
-  // setup keypress shortcuts
-  this.configureKeys();
-  Game.Config.fps = 10;
+    // retrieve high score from cookie
+    this.stats = new Game.Stats().retrieveHighScore();
+    if (!this.firstGame) {
+      $(".high-score").html("Top Score: " + this.stats.highScore);
+    }
 
-  // retrieve high score from cookie
-  this.stats = new Game.Stats().retrieveHighScore();
-  if (!this.firstGame) {
-    $(".high-score").html(
-      "Top Score: " + this.stats.highScore
+    // set timed delay on border illumination
+    this.delayIntroAnimation();
+
+    this.flashPlayButton = setInterval(function() {
+      $("#press-play").addClass("animated flash");
+      var wait = window.setTimeout(function() {
+        $("#press-play").removeClass("animated flash");
+      }, 1300);
+    }, 8000);
+
+    // show start button and keyboard shortcuts
+    $("#start-button").fadeIn(1600);
+    $("#config").fadeIn(1500);
+
+    // start button begins new game
+    $("#start-button").click(
+      function() {
+        $("#config").fadeOut(1500);
+        this.unPause();
+        this.beginGameSequence();
+        this.newGame = false;
+      }.bind(this)
     );
+  });
 
-  }
+  Play.prototype.delayIntroAnimation = function() {
+    setTimeout(
+      function() {
+        this.board.introAnimation();
+      }.bind(this),
+      2400
+    );
+  };
 
-  // set timed delay on border illumination
-  this.delayIntroAnimation();
+  Play.prototype.loopPlay = function() {
+    var game = this;
+    game.inPlay = true;
 
-  this.flashPlayButton = setInterval( function () {
+    // initialize loop
+    game.loop = setInterval(function() {
+      // adjust board
+      game.adjustDir();
 
+      // render board unless game is lost
+      if (!game.lost) {
+        game.renderBoard();
+      } else {
+        clearInterval(game.loop);
+        game.inPlay = false;
+      }
+    }, 1000 / Game.Config.fps);
+  };
 
-  $("#press-play").addClass('animated flash');
-          var wait = window.setTimeout( function(){
-              $("#press-play").removeClass('animated flash')}, 1300
-          );
-  }, 8000);
+  Play.prototype.adjustDir = function() {
+    // change direction, move snake, update apples
+    this.changeDirs();
+    this.board.adjust();
 
+    // reset boolean after adjusting for change in direction
+    this.alreadyChangedDirs = false;
 
+    // check if snake is along the side of the wall
+    new Game.Wall().checkOnEdge(this);
 
+    // check if snake is eating itself
+    this.checkForLoss();
 
-  // show start button and keyboard shortcuts
-  $("#start-button").fadeIn(1600);
-  $("#config").fadeIn(1500);
+    // update current score
+    var currentScore = this.board.snake.length();
+    this.stats.adjustCounter(currentScore);
 
-  // start button begins new game
-  $("#start-button").click(function () {
-    $("#config").fadeOut(1500);
-    this.unPause();
-    this.beginGameSequence();
-    this.newGame = false;
-  }.bind(this));
-
-};
-
-Play.prototype.delayIntroAnimation = function () {
-  setTimeout(function () {
-   this.board.introAnimation();
-  }.bind(this), 2400);
-};
-
-
-Play.prototype.loopPlay = function () {
-
-  var game = this;
-  game.inPlay = true;
-
-  // initialize loop
-  game.loop = setInterval( function () {
-
-    // adjust board
-    game.adjustDir();
-
-    // render board unless game is lost
-    if (!game.lost) {
-      game.renderBoard();
-    } else {
-      clearInterval(game.loop);
-      game.inPlay = false;
-    }
-
-  }, 1000 / Game.Config.fps );
-
-};
-
-Play.prototype.adjustDir = function () {
-
-  // change direction, move snake, update apples
-  this.changeDirs();
-  this.board.adjust();
-
-  // reset boolean after adjusting for change in direction
-  this.alreadyChangedDirs = false;
-
-  // check if snake is along the side of the wall
-  new Game.Wall().checkOnEdge(this);
-
-  // check if snake is eating itself
-  this.checkForLoss();
-
-  // update current score
-  var currentScore = this.board.snake.length();
-  this.stats.adjustCounter(currentScore);
-
-  if(this.board.snake.eating) {
-    Game.Config.fps += 1;
-    clearInterval(this.loop);
-    this.loopPlay();
-  }
-
-
-};
-
-Play.prototype.beginGameSequence = function () {
-  $("#start-button").fadeOut(600, function() {
-      clearInterval(this.flashPlayButton);
+    if (this.board.snake.eating) {
+      Game.Config.fps += 1;
+      clearInterval(this.loop);
       this.loopPlay();
-      this.newGame = false;
-      this.firstGame = false;
-    }.bind(this));
-};
-
-
-Play.prototype.blinkOut = function ($block) {
-  $block.css("background-color", "white");
-  $block.css("transition", "opacity 1s");
-  $block.one("transitionend", function() {
-    $block.css("background-color", "#47ff7e");
-    $block.css("transition", "opacity 1.5s");
-  });
-  $block.css("opacity", "0");
-};
-
-Play.prototype.checkForLoss = function () {
-  // || this.offBoard(this.board.snake.headPos)
-  if (this.board.snake.eatingSelf()) { this.lossSequence(); }
-};
-
-Play.prototype.changeDirs = function () {
-
-  // prevent function from overlapping with itself
-  if (this.alreadyChangedDirs || this.dirQueue.length === 0) return;
-  this.alreadyChangedDirs = true;
-
-  // change direction based of next item in queue
-  this.board.snake.changeDir(this.dirQueue.shift());
-};
-
-Play.prototype.configureKeys = function () {
-
-  var game = this;
-
-  key('up', function () { game.queueDirShift(new Game.Coord(0, -1)); } );
-  key('left', function () { game.queueDirShift(new Game.Coord(-1, 0)); });
-  key('down', function () { game.queueDirShift(new Game.Coord(0, 1)); });
-  key('right', function () { game.queueDirShift(new Game.Coord(1, 0)); });
-  key('space', function () {
-    if (game.readyToBegin) {
-      $("#config").fadeOut(1500);
-      game.unPause();
-      game.beginGameSequence();
-      game.newGame = false;
-    } else {
-      game.togglePlay();
     }
+  };
 
-  });
-  key('q', function () {
-    if (game.inPlay) game.lossSequence();
-  });
-};
+  Play.prototype.beginGameSequence = function() {
+    $("#start-button").fadeOut(
+      600,
+      function() {
+        clearInterval(this.flashPlayButton);
+        this.loopPlay();
+        this.newGame = false;
+        this.firstGame = false;
+      }.bind(this)
+    );
+  };
 
-
-
-
-Play.prototype.lossSequence = function () {
-  // update high score
-  this.logHighScore();
-
-  var game = this;
-
-  // prevent board from rendering
-  this.lost = true;
-  game.readyToBegin = false;
-
-
-
-
-  // this.togglePlay();
-  this.pause();
-
-  this.gameOverAnimation();
-
-
-};
-
-Play.prototype.gameOverAnimation = function () {
-
-  var game = this;
-
-  this.gameOver = true;
-
-  $(".game-over").css("opacity", "1").css("top", "-300px");
-
-  setTimeout(function () {
-    $(".countdown-block").css("opacity", "1");
-  }, 0);
-
-  $(".countdown-blocks").one("transitionend", function() {
-
-    setTimeout(function () {
-      game.blinkOut($(".countdown-blocks .block-1"));
-    }, 200 );
-
-    setTimeout(function () {
-      game.blinkOut($(".countdown-blocks .block-2"));
-    }, 600);
-
-    setTimeout(function () {
-      game.blinkOut($(".countdown-blocks .block-3"));
-    }, 1200);
-
-    setTimeout(function () {
-      $(".game-over").css("transition", "opacity 1.5s");
-      $(".game-over").css("opacity", "0");
-    }, 1500);
-
-    setTimeout(function () {
-      game.reset();
-      game.newGame = true;
-    }, 1600);
-
+  Play.prototype.blinkOut = function($block) {
+    $block.css("background-color", "white");
+    $block.css("transition", "opacity 1s");
+    $block.one("transitionend", function() {
+      $block.css("background-color", "#47ff7e");
+      $block.css("transition", "opacity 1.5s");
     });
-};
+    $block.css("opacity", "0");
+  };
 
+  Play.prototype.checkForLoss = function() {
+    // || this.offBoard(this.board.snake.headPos)
+    if (this.board.snake.eatingSelf()) {
+      this.lossSequence();
+    }
+  };
 
+  Play.prototype.changeDirs = function() {
+    // prevent function from overlapping with itself
+    if (this.alreadyChangedDirs || this.dirQueue.length === 0) return;
+    this.alreadyChangedDirs = true;
 
-Play.prototype.logHighScore = function () {
-  // set cookie to max of current score and previous high score
-  var currentScore = this.board.snake.length();
-  debugger;
-  document.cookie = "high_score=" +
-    Math.max(currentScore, this.stats.highScore);
+    // change direction based of next item in queue
+    this.board.snake.changeDir(this.dirQueue.shift());
+  };
 
-};
+  Play.prototype.configureKeys = function() {
+    var game = this;
 
+    key("up", function() {
+      game.queueDirShift(new Game.Coord(0, -1));
+    });
+    key("left", function() {
+      game.queueDirShift(new Game.Coord(-1, 0));
+    });
+    key("down", function() {
+      game.queueDirShift(new Game.Coord(0, 1));
+    });
+    key("right", function() {
+      game.queueDirShift(new Game.Coord(1, 0));
+    });
+    key("space", function() {
+      if (game.readyToBegin) {
+        $("#config").fadeOut(1500);
+        game.unPause();
+        game.beginGameSequence();
+        game.newGame = false;
+      } else {
+        game.togglePlay();
+      }
+    });
+    key("q", function() {
+      if (game.inPlay) game.lossSequence();
+    });
+  };
 
+  Play.prototype.lossSequence = function() {
+    // update high score
+    this.logHighScore();
 
+    var game = this;
 
-Play.prototype.queueDirShift = function (dir) {
-  //implementing queue so that users can make moves in quick succession
-  this.dirQueue.push(dir);
-  this.changeDirs();
+    // prevent board from rendering
+    this.lost = true;
+    game.readyToBegin = false;
 
+    // this.togglePlay();
+    this.pause();
 
-};
+    this.gameOverAnimation();
+  };
 
-Play.prototype.reset = function () {
-  var game = this;
+  Play.prototype.gameOverAnimation = function() {
+    var game = this;
 
-  //remove everything but the game info
-  this.$el.find(".stopper").remove();
-  this.$el.find(".square").remove();
+    this.gameOver = true;
 
-  $("#start-button").fadeIn(1600, function() {
-    game.readyToBegin = true;
-    clearInterval(game.loop);
-    newGame = new Game.Play($el, false);
+    $(".game-over")
+      .css("opacity", "1")
+      .css("top", "-300px");
 
-  }.bind(this));
-};
+    setTimeout(function() {
+      $(".countdown-block").css("opacity", "1");
+    }, 0);
 
-Play.prototype.renderBoard = function () {
-  this.board.render(this.$el);
-};
+    $(".countdown-blocks").one("transitionend", function() {
+      setTimeout(function() {
+        game.blinkOut($(".countdown-blocks .block-1"));
+      }, 200);
 
-Play.prototype.pause = function () {
-  var game = this;
-  game.$el.addClass("paused");
-  clearInterval(game.loop);
-  game.inPlay = false;
-  game.paused = true;
-};
+      setTimeout(function() {
+        game.blinkOut($(".countdown-blocks .block-2"));
+      }, 600);
 
-Play.prototype.unPause = function () {
-  this.$el.removeClass("paused");
-  // this.loopPlay();
-  // this.inPlay = true;
-  this.paused = false;
-};
+      setTimeout(function() {
+        game.blinkOut($(".countdown-blocks .block-3"));
+      }, 1200);
 
-Play.prototype.togglePlay = function () {
-  if (this.gameOver) return;
+      setTimeout(function() {
+        $(".game-over").css("transition", "opacity 1.5s");
+        $(".game-over").css("opacity", "0");
+      }, 1500);
 
-  console.log("togglePlay");
-  var game = this;
+      setTimeout(function() {
+        game.reset();
+        game.newGame = true;
+      }, 1600);
+    });
+  };
 
-  if(this.newGame) {
+  Play.prototype.logHighScore = function() {
+    // set cookie to max of current score and previous high score
+    var currentScore = this.board.snake.length();
+    document.cookie =
+      "high_score=" + Math.max(currentScore, this.stats.highScore);
+  };
 
-    this.beginGameSequence();
-    this.newGame = false;
-    console.log("this.beginGameSequence();");
+  Play.prototype.queueDirShift = function(dir) {
+    //implementing queue so that users can make moves in quick succession
+    this.dirQueue.push(dir);
+    this.changeDirs();
+  };
 
-  } else if (this.paused) {
+  Play.prototype.reset = function() {
+    var game = this;
 
-    this.$el.removeClass("paused");
-    this.loopPlay();
-    this.paused = false;
+    //remove everything but the game info
+    this.$el.find(".stopper").remove();
+    this.$el.find(".square").remove();
 
-      $(".me-info").css("transition", ".5s").css("opacity", "0");
-      $(".me-info").one("transitionend", function() {
-        $(".me-info").css("transition", "1.5s").css("top", "-300px");
-      });
+    $("#start-button").fadeIn(1600, function() {
+      game.readyToBegin = true;
+      clearInterval(game.loop);
+      newGame = new Game.Play($el, false);
+    });
+  };
 
+  Play.prototype.renderBoard = function() {
+    this.board.render(this.$el);
+  };
 
-  } else {
-
-    this.$el.addClass("paused");
+  Play.prototype.pause = function() {
+    var game = this;
+    game.$el.addClass("paused");
     clearInterval(game.loop);
     game.inPlay = false;
-    this.paused = true;
-    if (!this.lost) {
-      $(".me-info").css("opacity", "1").css("top", "-420px");
+    game.paused = true;
+  };
+
+  Play.prototype.unPause = function() {
+    this.$el.removeClass("paused");
+    // this.loopPlay();
+    // this.inPlay = true;
+    this.paused = false;
+  };
+
+  Play.prototype.togglePlay = function() {
+    if (this.gameOver) return;
+
+    console.log("togglePlay");
+    var game = this;
+
+    if (this.newGame) {
+      this.beginGameSequence();
+      this.newGame = false;
+      console.log("this.beginGameSequence();");
+    } else if (this.paused) {
+      this.$el.removeClass("paused");
+      this.loopPlay();
+      this.paused = false;
+
+      $(".me-info")
+        .css("transition", ".5s")
+        .css("opacity", "0");
+      $(".me-info").one("transitionend", function() {
+        $(".me-info")
+          .css("transition", "1.5s")
+          .css("top", "-300px");
+      });
+    } else {
+      this.$el.addClass("paused");
+      clearInterval(game.loop);
+      game.inPlay = false;
+      this.paused = true;
+      if (!this.lost) {
+        $(".me-info")
+          .css("opacity", "1")
+          .css("top", "-420px");
+      }
     }
-
-  }
-};
-
+  };
 })();
